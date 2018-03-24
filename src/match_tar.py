@@ -28,9 +28,15 @@ if __name__ == "__main__":
 		args.print_help()
 		exit(1)
 
+	def matches_patterns(patterns, file):
+		for p in patterns:
+			if re.match(p,file):
+				return True
+		return False
+
 	matching_files = []
 	for file in os.listdir(args.directory):
-		if re.match(".*",file):
+		if matches_patterns(args.patterns,file):
 			matching_files.append(file)
 
 	if args.timestamp:
