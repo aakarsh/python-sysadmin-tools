@@ -11,7 +11,8 @@ tar_file_name = "matching"
 
 if __name__ == "__main__":
 	usage ="tar-matching <dir> <pattern> [-o file-name]" 
-	parser = argparse.ArgumentParser(usage = usage, description="Parse files matching pattern in directory")
+	parser = argparse.ArgumentParser(usage = usage, 
+					 description="Parse files matching pattern in directory")
 	parser.add_argument(dest="directory", type=str )
 	parser.add_argument(dest="patterns",  type=str, nargs="+")
 	parser.add_argument("-o",dest="out_file",  type=str, default=tar_dir+"/"+tar_file_name)
