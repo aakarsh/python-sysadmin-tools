@@ -5,17 +5,15 @@ import json
 
 def run(cmd,args=[]):
 	"""Run a command and pipe its output"""
-	if not cmd:
-		ValueError("Empty command")
+	if not cmd: ValueError("Empty command")
 	cmd_args = [cmd]
-	if args: cmd_args.append(args)
+	if args: cmd_args += args
 	return subprocess.Popen(cmd_args,4096,stdout=subprocess.PIPE)
 	
 def disk_info():
 	"""Parses fields of disk information as a map on linux and returns 
 	it as a map."""
-	res = run("df") 
-	lines = [l.strip() for l in res.stdout.readlines()]
+	lines = [l.strip() for l in run("df").stdout.readlines()]
 	file_systems = []
 	for line in lines:
 		if line.startswith("Filesystem") or line.startswith("map"):
@@ -38,8 +36,8 @@ def disk_info():
 def mem_info():
 	"""Parses fields in the memory info file of linux and 
 	returns it as a map."""
-	res = subprocess.Popen(["cat","/proc/meminfo"],4096,stdout=subprocess.PIPE)
-	field_values = [line.strip().split(":") for line in res.stdout.readlines()]
+	field_values = [line.strip().split(":") 
+				for line in run("cat",["/proc/meminfo"]).stdout.readlines()]
 	ret = {}
 	for fv in field_values:
 		ret[fv[0].strip().lower()] = fv[1].strip()
@@ -47,8 +45,7 @@ def mem_info():
 
 def process_info():
 	"""Parses fields in the process info and returns it as a map."""
-	res = subprocess.Popen(["ps","aux"],4096,stdout=subprocess.PIPE)
-	lines = [l.strip() for l in res.stdout.readlines()]
+	lines = [l.strip() for l in run("ps",["aux"]).stdout.readlines()]
 	ret = []
 	for line in lines:
 		if line.startswith("USER"):
