@@ -1,5 +1,4 @@
 #!/usr/bin/env python
-
 import subprocess
 import json
 
@@ -12,8 +11,16 @@ def disk_info():
 			continue
 		fs = {}
 		fields =  line.split()
-		fs["file_system"],fs["blocks"],fs["used"],fs["available"] = fields[0],fields[1],fields[2],fields[3]
-		fs["mounted"] = fields[-1]
+		field_mapping = {
+			"file_system" : 0,
+			"blocks"      : 1,
+			"used"	      : 2,
+			"available"   : 3,
+			"mounted"     : -1 }
+
+		for field_key in field_mapping.keys():
+			fs[field_key] = fields[field_mapping[field_key]]
+
 		file_systems.append(fs)
 	return file_systems
 
@@ -48,5 +55,6 @@ sys_info["disk_info"] = disk_info()
 sys_info["mem_info"] = meminfo()
 sys_info["process_info"] = process_info()
 json_string = json.dumps(sys_info,indent=True)		
+
 print(json_string)
-	
+
