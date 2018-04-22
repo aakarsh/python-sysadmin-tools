@@ -1,9 +1,20 @@
 #!/usr/bin/env python
+
 import subprocess
 import json
 
+def run(cmd,args=[]):
+	"""Run a command and pipe its output"""
+	if not cmd:
+		ValueError("Empty command")
+	cmd_args = [cmd]
+	if args: cmd_args.append(args)
+	return subprocess.Popen(cmd_args,4096,stdout=subprocess.PIPE)
+	
 def disk_info():
-	res = subprocess.Popen(["df"],4096,stdout=subprocess.PIPE)
+	"""Parses fields of disk information as a map on linux and returns 
+	it as a map."""
+	res = run("df") 
 	lines = [l.strip() for l in res.stdout.readlines()]
 	file_systems = []
 	for line in lines:
@@ -24,7 +35,9 @@ def disk_info():
 		file_systems.append(fs)
 	return file_systems
 
-def meminfo():
+def mem_info():
+	"""Parses fields in the memory info file of linux and 
+	returns it as a map."""
 	res = subprocess.Popen(["cat","/proc/meminfo"],4096,stdout=subprocess.PIPE)
 	field_values = [line.strip().split(":") for line in res.stdout.readlines()]
 	ret = {}
@@ -33,6 +46,7 @@ def meminfo():
 	return ret
 
 def process_info():
+	"""Parses fields in the process info and returns it as a map."""
 	res = subprocess.Popen(["ps","aux"],4096,stdout=subprocess.PIPE)
 	lines = [l.strip() for l in res.stdout.readlines()]
 	ret = []
@@ -40,21 +54,27 @@ def process_info():
 		if line.startswith("USER"):
 			continue
 		line_map = {}
-		keys=["user","pid","%cpu","%mem","vsz","rss","tty","stat","start","time","command0"]
+
+		keys = ["user","pid","%cpu","%mem","vsz",
+			"rss","tty","stat","start","time",
+			"command0"]
+
 		numeric_keys = ["pid","%cpu","%mem","vsz"]
+
 		for (k,v) in zip(keys,line.split()):
 			if not k in numeric_keys:
 				line_map[k] = v 
 			else:
 				 line_map[k] = float(v)
+
 		ret.append(line_map)	
 	return ret
 
-sys_info = {}
-sys_info["disk_info"] = disk_info()
-sys_info["mem_info"] = meminfo()
-sys_info["process_info"] = process_info()
-json_string = json.dumps(sys_info,indent=True)		
+sys_info = {
+	"disk_info" 	: disk_info(),
+	"mem_info"  	: mem_info (),
+	"process_info" 	: process_info()
+}
 
-print(json_string)
+print(json.dumps(sys_info,indent=True))
 
