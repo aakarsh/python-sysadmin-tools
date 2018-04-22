@@ -1,9 +1,8 @@
 #!/usr/bin/env python
-
 import subprocess
 import json
 
-def run(cmd,args=[]):
+def run(cmd,*args):
 	"""Run a command and pipe its output"""
 	if not cmd: ValueError("Empty command")
 	cmd_args = [cmd]
@@ -13,7 +12,8 @@ def run(cmd,args=[]):
 def disk_info():
 	"""Parses fields of disk information as a map on linux and returns 
 	it as a map."""
-	lines = [l.strip() for l in run("df").stdout.readlines()]
+	output_lines = run("df").stdout.readlines()
+	lines = [l.strip() for l in output_lines]
 	file_systems = []
 	for line in lines:
 		if line.startswith("Filesystem") or line.startswith("map"):
@@ -26,18 +26,16 @@ def disk_info():
 			"used"	      : 2,
 			"available"   : 3,
 			"mounted"     : -1 }
-
 		for field_key in field_mapping.keys():
 			fs[field_key] = fields[field_mapping[field_key]]
-
 		file_systems.append(fs)
 	return file_systems
 
 def mem_info():
 	"""Parses fields in the memory info file of linux and 
 	returns it as a map."""
-	field_values = [line.strip().split(":") 
-				for line in run("cat",["/proc/meminfo"]).stdout.readlines()]
+	output_lines = run("cat","/proc/meminfo").stdout.readlines()  
+	field_values = [line.strip().split(":") for line in output_lines]
 	ret = {}
 	for fv in field_values:
 		ret[fv[0].strip().lower()] = fv[1].strip()
@@ -45,33 +43,29 @@ def mem_info():
 
 def process_info():
 	"""Parses fields in the process info and returns it as a map."""
-	lines = [l.strip() for l in run("ps",["aux"]).stdout.readlines()]
+	output_lines = run("ps","aux").stdout.readlines()
+	lines = [l.strip() for l in output_lines]
 	ret = []
 	for line in lines:
 		if line.startswith("USER"):
 			continue
 		line_map = {}
-
 		keys = ["user","pid","%cpu","%mem","vsz",
 			"rss","tty","stat","start","time",
 			"command0"]
-
 		numeric_keys = ["pid","%cpu","%mem","vsz"]
-
 		for (k,v) in zip(keys,line.split()):
 			if not k in numeric_keys:
 				line_map[k] = v 
 			else:
 				 line_map[k] = float(v)
-
 		ret.append(line_map)	
 	return ret
 
-sys_info = {
-	"disk_info" 	: disk_info(),
-	"mem_info"  	: mem_info (),
-	"process_info" 	: process_info()
-}
+def get_sys_info():
+	return {"disk_info" 	: disk_info(),
+		"mem_info"  	: mem_info (),
+		"process_info" 	: process_info()}
 
-print(json.dumps(sys_info,indent=True))
-
+if __name__ == "__main__":
+	print(json.dumps(get_sys_info(),indent=True))
